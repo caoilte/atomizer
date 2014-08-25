@@ -16,7 +16,7 @@ package object jaxb {
    * Taken from,
    * https://gist.github.com/krasserm/1891525#file-jaxb-02-scala
    */
-  class OptionAdapter[A](nones: A*) extends XmlAdapter[A, Option[A]] {
+  class OptionAdapter[A >: Null](nones: A*) extends XmlAdapter[A, Option[A]] {
     def marshal(v: Option[A]): A = {
       v.getOrElse(nones(0))
     }
@@ -46,4 +46,9 @@ package object jaxb {
    * (Nones swapped around because of
    */
   class StringOptionAdapter extends OptionAdapter[String](null, "")
+  class LongAdapter extends XmlAdapter[String, java.lang.Long] {
+    override def unmarshal(v: String) = java.lang.Long.parseLong(v)
+    override def marshal(v: lang.Long) = v.toString
+  }
+  class LongOptionAdapter extends CustomOptionAdapter[String,java.lang.Long](new LongAdapter,null)
 }

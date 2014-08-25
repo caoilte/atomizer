@@ -4,7 +4,7 @@ import javax.xml.bind.annotation._
 import javax.xml.bind.annotation.adapters._
 
 import org.caoilte.atomizer.model.Atom.AtomDateTimeOptionAdapter
-import org.caoilte.atomizer.model.Link.Relationship
+import org.caoilte.atomizer.model.Link.{RelationshipAdapter, Relationship}
 import org.caoilte.atomizer.model.Text.OptionTextAdapter
 import org.caoilte.jaxb._
 import org.joda.time.DateTime
@@ -45,10 +45,35 @@ object Link {
   case object last extends Relationship
   case object previous extends Relationship
   case object next extends Relationship
+
+  class RelationshipAdapter extends XmlAdapter[String, Relationship] {
+    def marshal(v: Relationship): String = if (v.equals(alternative)) null else v.toString
+    def unmarshal(v: String):Relationship = v match {
+      case "alternative" => alternative
+      case "enclosure" => enclosure
+      case "related" => related
+      case "self" => self
+      case "via" => via
+      case "first" => first
+      case "last" => last
+      case "previous" => previous
+      case "next" => next
+      case null => alternative
+      case other => throw new IllegalArgumentException(s"Invalid relationship '$other'")
+    }
+  }
 }
 
-case class Link(href:Uri, rel:Relationship = Link.alternative, `type`:Option[MediaType] = None,
-                hreflang:Option[String] = None, length:Option[Long] = None)
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Link(@xmlAttribute @xmlTypeAdapter(classOf[UriAdapter]) href:Uri,
+                @xmlAttribute @xmlTypeAdapter(classOf[RelationshipAdapter]) rel:Relationship = Link.alternative,
+                @xmlAttribute @xmlTypeAdapter(classOf[MediaTypeOptionAdapter]) `type`:Option[MediaType] = None,
+                @xmlAttribute @xmlTypeAdapter(classOf[StringOptionAdapter]) hreflang:Option[String] = None,
+                @xmlAttribute @xmlTypeAdapter(classOf[LongOptionAdapter]) length:Option[Long] = None) {
+
+  private def this() = this(Uri(""))
+}
 
 case class Category(term: String, scheme:Option[Uri] = None, label:Option[String] = None)
 

@@ -7,7 +7,7 @@ import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, FunSuite}
 
-import spray.http.Uri
+import spray.http.{MediaTypes, MediaType, Uri}
 
 class FeedSerializationTests extends FunSuite with Matchers
 with GeneratorDrivenPropertyChecks with JAXBConverters {
@@ -22,13 +22,43 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   val optTexts = Gen.oneOf( someText, noText )
 
   val optionalDateTimes = Gen.oneOf[Option[DateTime]](Some(new DateTime().withMillisOfSecond(0)), None)
+  val optStrings = Gen.oneOf(None, Some("an id"))
 
   val sources:Gen[Source] = for {
-    id <- Gen.oneOf(None, Some("an id"))
+    id <- optStrings
     title <- optTexts
     updated <- optionalDateTimes
     rights <- optTexts
   } yield Source(id, title, updated, rights)
+
+  val uris:Gen[Uri] = Gen.oneOf(Seq(
+    Uri("http://example.org/"),
+    Uri("http://example.org/2003/12/13/atom03"),
+    Uri("/2003/12/13/atom03")
+  ))
+  val relationships = Gen.oneOf[Link.Relationship](Link.alternative, Link.enclosure,
+    Link.related, Link.self, Link.via, Link.first, Link.last, Link.previous, Link.next
+  )
+  val mediaTypes = Gen.oneOf[MediaType](
+    MediaTypes.`text/html`,
+    MediaTypes.`audio/mpeg`
+  )
+  val noMediaType = Gen.const(None:Option[MediaType])
+  val someMediaType = mediaTypes.map( Some.apply )
+  val optMediaTypes = Gen.oneOf( someMediaType, noMediaType)
+
+  val largePositiveLong:Gen[Long] = Gen.choose(0L,10000000L)
+  val noLong = Gen.const(None:Option[Long])
+  val someLong = largePositiveLong.map( Some.apply )
+  val optLongs = Gen.oneOf( someLong, noLong)
+
+  val links:Gen[Link] = for {
+    uri <- uris
+    relationship <- relationships
+    optType <- optMediaTypes
+    optString <- optStrings
+    optLong <- optLongs
+  } yield Link(uri, relationship, optType, optString, optLong)
 
   val XML_FEED =
   """
@@ -87,12 +117,17 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     }
   }
 
-
   test("A Source without fields defined should not have those fields serialized") {
     val source = Source(None, None, None, None)
     val baos = new ByteArrayOutputStream()
     marshaller.marshal(source,baos)
     baos.toString() should equal("""<?xml version="1.0" encoding="UTF-8"?><source/>""")
+  }
+
+  test("Generated Links should serialize and re-serialize correctly") {
+    forAll((links, "link")) { (link: Link) =>
+      marshallThenUnmarshall(link) should equal(link)
+    }
   }
 
   def marshallThenUnmarshall(obj:AnyRef):AnyRef = {

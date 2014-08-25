@@ -2,7 +2,7 @@ package org.caoilte.jaxb
 
 import javax.xml.bind.{JAXBContext, Marshaller, Unmarshaller}
 
-import org.caoilte.atomizer.model.{Source, Text}
+import org.caoilte.atomizer.model.{Link, Source, Text}
 
 /**
  * On threadsafety:
@@ -11,7 +11,7 @@ import org.caoilte.atomizer.model.{Source, Text}
  */
 trait JAXBConverters {
 
-  val context:JAXBContext = JAXBContext.newInstance(classOf[Text], classOf[Source])
+  val context:JAXBContext = JAXBContext.newInstance(classOf[Text], classOf[Source], classOf[Link])
 
   // TODO: pool
   def marshaller:Marshaller = {
