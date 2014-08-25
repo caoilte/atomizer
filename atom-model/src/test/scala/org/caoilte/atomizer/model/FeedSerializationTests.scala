@@ -70,6 +70,18 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     label <- optStrings
   } yield Category(term, scheme, label)
 
+  val emails = Gen.const(Email("test@test.com"))
+  val noEmail = Gen.const(None:Option[Email])
+  val someEmail = emails.map( Some.apply )
+  val optEmails = Gen.oneOf( someEmail, noEmail)
+
+  val persons = for {
+    name <- Gen.const("name")
+    optUri <- optUris
+    optEmail <- optEmails
+  } yield Person(name, optUri, optEmail)
+
+
   val XML_FEED =
   """
     |<?xml version="1.0" encoding="utf-8"?>
@@ -143,6 +155,12 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   test("Generated Categories should serialize and re-serialize correctly") {
     forAll((categories, "category")) { (category: Category) =>
       marshallThenUnmarshall(category) should equal(category)
+    }
+  }
+
+  test("Generated Persons should serialize and re-serialize correctly") {
+    forAll((persons, "person")) { (person: Person) =>
+      marshallThenUnmarshall(person) should equal(person)
     }
   }
 

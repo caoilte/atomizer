@@ -4,8 +4,9 @@ import javax.xml.bind.annotation._
 import javax.xml.bind.annotation.adapters._
 
 import org.caoilte.atomizer.model.Atom.AtomDateTimeOptionAdapter
+import org.caoilte.atomizer.model.Email.EmailOptionAdapter
 import org.caoilte.atomizer.model.Link.{RelationshipAdapter, Relationship}
-import org.caoilte.atomizer.model.Text.OptionTextAdapter
+import org.caoilte.atomizer.model.Text.TextOptionAdapter
 import org.caoilte.jaxb._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -28,10 +29,25 @@ case class Feed(id:String, title:Text, updated: DateTime, authors:List[Person] =
 
 }
 
-case class Person(name:String, uri:Option[Uri] = None, email:Option[Email] = None)
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Person(@xmlElement name:String,
+                  @xmlElement @xmlTypeAdapter(classOf[UriOptionAdapter]) uri:Option[Uri] = None,
+                  @xmlElement @xmlTypeAdapter(classOf[EmailOptionAdapter]) email:Option[Email] = None) {
 
-case class Email(email:String) {
+  private def this() = this("")
+}
+
+object Email {
+
+  class EmailOptionAdapter extends OptionAdapter[Email](null, Email(""))
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Email(@xmlValue email:String) {
   override def toString = email
+
+  private def this() = this("")
 }
 
 object Link {
@@ -93,9 +109,9 @@ case class Entry(id:String, title:Text, updated: DateTime, authors:List[Person]=
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 case class Source(@xmlElement @xmlTypeAdapter(classOf[StringOptionAdapter]) id:Option[String],
-                  @xmlElement @xmlTypeAdapter(classOf[OptionTextAdapter]) title:Option[Text],
+                  @xmlElement @xmlTypeAdapter(classOf[TextOptionAdapter]) title:Option[Text],
                   @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) updated: Option[DateTime],
-                  @xmlElement @xmlTypeAdapter(classOf[OptionTextAdapter]) rights:Option[Text] = None) {
+                  @xmlElement @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None) {
 
   private def this() = this(None, None, None, None)
 }
@@ -117,9 +133,9 @@ object Text {
       case other => throw new IllegalArgumentException(s"Invalid type '$other'")
     }
   }
-  class OptionTypeAdapter extends CustomOptionAdapter[String, Type](new TypeAdapter)
+  class TypeOptionAdapter extends CustomOptionAdapter[String, Type](new TypeAdapter)
 
-  class OptionTextAdapter extends OptionAdapter[Text](null, Text(""))
+  class TextOptionAdapter extends OptionAdapter[Text](null, Text(""))
 }
 trait Content
 
