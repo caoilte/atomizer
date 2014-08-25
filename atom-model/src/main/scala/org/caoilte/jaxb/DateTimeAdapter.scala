@@ -11,4 +11,4 @@ class DateTimeAdapter(dtf: DateTimeFormatter) extends XmlAdapter[String, DateTim
   def marshal(v: DateTime): String = dtf.print(v)
 }
 
-class DateTimeOptionAdapter(dtf: DateTimeFormatter) extends CustomOptionAdapter[String,DateTime](new DateTimeAdapter(dtf), "")
+class DateTimeOptionAdapter(dtf: DateTimeFormatter) extends CustomOptionAdapter[String,DateTime](new DateTimeAdapter(dtf), null, "")

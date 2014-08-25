@@ -81,11 +81,18 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     unmarshalledText should equal(Text("sample content", Text.text))
   }
 
-
   test("Generated Sources should serialize and re-serialize correctly") {
     forAll((sources, "source")) { (source: Source) =>
       marshallThenUnmarshall(source) should equal(source)
     }
+  }
+
+
+  test("A Source without fields defined should not have those fields serialized") {
+    val source = Source(None, None, None, None)
+    val baos = new ByteArrayOutputStream()
+    marshaller.marshal(source,baos)
+    baos.toString() should equal("""<?xml version="1.0" encoding="UTF-8"?><source/>""")
   }
 
   def marshallThenUnmarshall(obj:AnyRef):AnyRef = {

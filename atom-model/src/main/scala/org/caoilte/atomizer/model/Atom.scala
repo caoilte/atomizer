@@ -86,21 +86,8 @@ object Text {
       case other => throw new IllegalArgumentException(s"Invalid type '$other'")
     }
   }
+  class OptionTypeAdapter extends CustomOptionAdapter[String, Type](new TypeAdapter)
 
-
-  class OptionTypeAdapter extends XmlAdapter[String, Option[Type]] {
-    def marshal(v: Option[Type]): String = v.map(_.toString).orNull
-    def unmarshal(v: String):Option[Type] = {
-      println("fup '"+v+";")
-      v match {
-        case "text" => Some(text)
-        case "html" => Some(html)
-        case "xhtml" => Some(xhtml)
-        case null => Some(text)
-        case other => throw new IllegalArgumentException(s"Invalid type '$other'")
-      }
-    }
-  }
   class OptionTextAdapter extends OptionAdapter[Text](null, Text(""))
 }
 trait Content
