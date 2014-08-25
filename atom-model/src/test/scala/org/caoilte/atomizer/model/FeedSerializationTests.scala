@@ -36,6 +36,10 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     Uri("http://example.org/2003/12/13/atom03"),
     Uri("/2003/12/13/atom03")
   ))
+  val noUri = Gen.const(None:Option[Uri])
+  val someUri = uris.map ( Some.apply )
+  val optUris = Gen.oneOf( someUri, noUri)
+
   val relationships = Gen.oneOf[Link.Relationship](Link.alternative, Link.enclosure,
     Link.related, Link.self, Link.via, Link.first, Link.last, Link.previous, Link.next
   )
@@ -59,6 +63,12 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     optString <- optStrings
     optLong <- optLongs
   } yield Link(uri, relationship, optType, optString, optLong)
+
+  val categories:Gen[Category] = for {
+    term <- Gen.const("category")
+    scheme <- optUris
+    label <- optStrings
+  } yield Category(term, scheme, label)
 
   val XML_FEED =
   """
@@ -127,6 +137,12 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   test("Generated Links should serialize and re-serialize correctly") {
     forAll((links, "link")) { (link: Link) =>
       marshallThenUnmarshall(link) should equal(link)
+    }
+  }
+
+  test("Generated Categories should serialize and re-serialize correctly") {
+    forAll((categories, "category")) { (category: Category) =>
+      marshallThenUnmarshall(category) should equal(category)
     }
   }
 

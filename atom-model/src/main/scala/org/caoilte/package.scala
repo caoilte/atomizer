@@ -48,7 +48,7 @@ package object jaxb {
   class StringOptionAdapter extends OptionAdapter[String](null, "")
   class LongAdapter extends XmlAdapter[String, java.lang.Long] {
     override def unmarshal(v: String) = java.lang.Long.parseLong(v)
-    override def marshal(v: lang.Long) = v.toString
+    override def marshal(v: java.lang.Long) = v.toString
   }
   class LongOptionAdapter extends CustomOptionAdapter[String,java.lang.Long](new LongAdapter,null)
 }

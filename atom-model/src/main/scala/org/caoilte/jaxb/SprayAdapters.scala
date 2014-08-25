@@ -8,6 +8,7 @@ class UriAdapter extends XmlAdapter[String, Uri] {
   def unmarshal(v: String): Uri = Uri(v)
   def marshal(v: Uri): String = v.toString()
 }
+class UriOptionAdapter extends CustomOptionAdapter[String,Uri](new UriAdapter, null, "")
 
 class MediaTypeAdapter extends XmlAdapter[String, MediaType] {
   def unmarshal(v: String): MediaType = {

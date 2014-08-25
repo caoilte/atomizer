@@ -75,7 +75,13 @@ case class Link(@xmlAttribute @xmlTypeAdapter(classOf[UriAdapter]) href:Uri,
   private def this() = this(Uri(""))
 }
 
-case class Category(term: String, scheme:Option[Uri] = None, label:Option[String] = None)
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Category(@xmlAttribute term: String,
+                    @xmlAttribute @xmlTypeAdapter(classOf[UriOptionAdapter]) scheme:Option[Uri] = None,
+                    @xmlAttribute @xmlTypeAdapter(classOf[StringOptionAdapter]) label:Option[String] = None) {
+  private def this() = this("")
+}
 
 case class Generator(text:String, uri:Option[Uri] = None, version:Option[String] = None)
 
