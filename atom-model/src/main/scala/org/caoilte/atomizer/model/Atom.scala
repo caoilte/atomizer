@@ -3,9 +3,10 @@ package org.caoilte.atomizer.model
 import javax.xml.bind.annotation._
 import javax.xml.bind.annotation.adapters._
 
-import org.caoilte.atomizer.model.Atom.AtomDateTimeOptionAdapter
+import org.caoilte.atomizer.model.Atom.{AtomDateTimeAdapter, AtomDateTimeOptionAdapter}
 import org.caoilte.atomizer.model.Email.EmailOptionAdapter
-import org.caoilte.atomizer.model.Link.{RelationshipAdapter, Relationship}
+import org.caoilte.atomizer.model.Link.{LinkOptionAdapter, RelationshipAdapter, Relationship}
+import org.caoilte.atomizer.model.Source.SourceOptionAdapter
 import org.caoilte.atomizer.model.Text.TextOptionAdapter
 import org.caoilte.jaxb._
 import org.joda.time.DateTime
@@ -15,6 +16,7 @@ import spray.http.{MediaType, Uri}
 object Atom {
 
   val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
+  class AtomDateTimeAdapter extends DateTimeAdapter(dateFormat)
   class AtomDateTimeOptionAdapter extends DateTimeOptionAdapter(dateFormat)
 }
 
@@ -27,6 +29,23 @@ case class Feed(id:String, title:Text, updated: DateTime, authors:List[Person] =
                  rights:Option[Text] = None, subtitle: Option[String] = None, entries: List[Entry]) {
   val xmlns = "http://www.w3.org/2005/Atom"
 
+}
+
+object Person {
+  import java.util.{List => JList}
+  import scala.collection.JavaConverters._
+
+  class PersonsAdapter extends AbstractListAdapter[PersonItems,List[Person],Person] {
+    def create(l: JList[Person]) = new PersonItems(l)
+  }
+
+  @XmlAccessorType(XmlAccessType.FIELD)
+  case class PersonItems(@xmlElementRef(name = "person") elem: JList[Person]) extends AbstractList[Person] {
+    def this() = this(null)
+  }
+  object PersonItems {
+    def apply(l: Iterable[Person]) = new PersonItems(l.toList.asJava)
+  }
 }
 
 @XmlRootElement
@@ -78,7 +97,10 @@ object Link {
       case other => throw new IllegalArgumentException(s"Invalid relationship '$other'")
     }
   }
+
+  class LinkOptionAdapter extends OptionAdapter[Link](null)
 }
+
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -91,6 +113,23 @@ case class Link(@xmlAttribute @xmlTypeAdapter(classOf[UriAdapter]) href:Uri,
   private def this() = this(Uri(""))
 }
 
+object Category {
+  import java.util.{List => JList}
+  import scala.collection.JavaConverters._
+
+  class CategoriesAdapter extends AbstractListAdapter[CategoryItems,List[Category],Category] {
+    def create(l: JList[Category]) = new CategoryItems(l)
+  }
+
+  @XmlAccessorType(XmlAccessType.FIELD)
+  case class CategoryItems(@xmlElementRef(name = "category") elem: JList[Category]) extends AbstractList[Category] {
+    def this() = this(null)
+  }
+  object CategoryItems {
+    def apply(l: Iterable[Category]) = new CategoryItems(l.toList.asJava)
+  }
+}
+
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 case class Category(@xmlAttribute term: String,
@@ -101,10 +140,29 @@ case class Category(@xmlAttribute term: String,
 
 case class Generator(text:String, uri:Option[Uri] = None, version:Option[String] = None)
 
-case class Entry(id:String, title:Text, updated: DateTime, authors:List[Person]= List(),
-                  content:Option[Content] = None, link:Option[Link], summary:Option[Text], category: List[Category] = List(),
-                  contributors: List[Person] = List(), published:Option[DateTime] = None, source:Option[Source] = None,
-                  rights:Option[Text] = None)
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Entry(@xmlElement id:String,
+                 @xmlElement title:Text,
+                 @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
+                 @xmlTypeAdapter(classOf[Person.PersonsAdapter]) author:List[Person]= List(),
+                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) content:Option[Text] = None,
+                 @xmlElement @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link],
+                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) summary:Option[Text],
+                 @xmlTypeAdapter(classOf[Category.CategoriesAdapter]) category: List[Category] = List(),
+                 @xmlTypeAdapter(classOf[Person.PersonsAdapter]) contributor: List[Person] = List(),
+                 @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) published:Option[DateTime] = None,
+                 @xmlElement @xmlTypeAdapter(classOf[SourceOptionAdapter]) source:Option[Source] = None,
+                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) rights:Option[Text] = None) {
+
+
+  private def this() = this("", Text(""), new DateTime(), List(), None, None, None, List(), List(), None, None, None)
+}
+
+object Source {
+
+  class SourceOptionAdapter extends OptionAdapter[Source](null)
+}
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -143,7 +201,7 @@ trait Content
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 case class Text(@xmlValue content:String,
-                @xmlAttribute @xmlTypeAdapter(classOf[Text.TypeAdapter]) `type`:Text.Type = Text.text) {
+                @xmlAttribute @xmlTypeAdapter(classOf[Text.TypeAdapter]) `type`:Text.Type = Text.text) extends Content {
   private def this() = this("", Text.text)
 }
 

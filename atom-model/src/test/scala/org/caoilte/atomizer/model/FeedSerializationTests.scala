@@ -21,15 +21,21 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   val noText = Gen.const( None:Option[Text] )
   val optTexts = Gen.oneOf( someText, noText )
 
-  val optionalDateTimes = Gen.oneOf[Option[DateTime]](Some(new DateTime().withMillisOfSecond(0)), None)
+  val dateTimes = Gen.const( new DateTime().withMillisOfSecond(0) )
+  val someDateTime = dateTimes.map ( Some.apply )
+  val noneDateTime = Gen.const( None:Option[DateTime] )
+  val optDateTimes = Gen.oneOf( someDateTime, noneDateTime )
   val optStrings = Gen.oneOf(None, Some("an id"))
 
   val sources:Gen[Source] = for {
     id <- optStrings
     title <- optTexts
-    updated <- optionalDateTimes
+    updated <- optDateTimes
     rights <- optTexts
   } yield Source(id, title, updated, rights)
+  val noSource = Gen.const(None:Option[Source])
+  val someSource = sources.map ( Some.apply )
+  val optSources = Gen.oneOf( noSource, someSource)
 
   val uris:Gen[Uri] = Gen.oneOf(Seq(
     Uri("http://example.org/"),
@@ -63,6 +69,9 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     optString <- optStrings
     optLong <- optLongs
   } yield Link(uri, relationship, optType, optString, optLong)
+  val noLink = Gen.const(None:Option[Link])
+  val someLink = links.map( Some.apply )
+  val optLinks = Gen.oneOf( someLink, noLink)
 
   val categories:Gen[Category] = for {
     term <- Gen.const("category")
@@ -80,6 +89,21 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     optUri <- optUris
     optEmail <- optEmails
   } yield Person(name, optUri, optEmail)
+
+  val entries = for {
+    id <- Gen.const("id")
+    title <- texts
+    updated <- dateTimes
+    authors <- Gen.listOf(persons)
+    content <- optTexts
+    link <- optLinks
+    summary <- optTexts
+    categories <- Gen.listOf(categories)
+    contributors <- Gen.listOf(persons)
+    published <- optDateTimes
+    source <- optSources
+    rights <- optTexts
+  } yield Entry(id, title, updated, authors, content, link, summary, categories, contributors, published, source, rights)
 
 
   val XML_FEED =
@@ -161,6 +185,12 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   test("Generated Persons should serialize and re-serialize correctly") {
     forAll((persons, "person")) { (person: Person) =>
       marshallThenUnmarshall(person) should equal(person)
+    }
+  }
+
+  test("Generated Entries should serialize and re-serialize correctly") {
+    forAll((entries, "entry")) { (entry: Entry) =>
+      marshallThenUnmarshall(entry) should equal(entry)
     }
   }
 
