@@ -28,10 +28,14 @@ package object jaxb {
   }
 
   /**
-   * NB The double type parameters ([S,A]) are necessary because Moxy always uses the first one as a target for casting
+   * NB The double type parameters ([S,A]) are necessary because MOXy always uses the first one as a target for casting
    * from the input string before passing to unmarshal. Unfortunately this means you need to always pass String as
    * the first type parameter when extending the CustomOptionAdapter (eg see DateTimeOptionAdapter).
-   * - (we use Moxy because of http://stackoverflow.com/a/11931768/58005)
+   *
+   * These bugs describe the behaviour and fix,
+   *   - https://bugs.eclipse.org/bugs/show_bug.cgi?id=440681
+   *   - https://bugs.eclipse.org/bugs/show_bug.cgi?id=431803
+   * The fix should be available in the next release after 2.5.2
    */
   class CustomOptionAdapter[S,A](customAdapter:XmlAdapter[String,A], nones: String*) extends XmlAdapter[String, Option[A]] {
     def marshal(v: Option[A]): String = {
@@ -55,7 +59,7 @@ package object jaxb {
   class LongOptionAdapter extends CustomOptionAdapter[String,java.lang.Long](new LongAdapter,null)
 
   /**
-   * NB As with the CustomOptionAdapter the rather complex type parameters are necessary because of the Moxy bug
+   * NB As with the CustomOptionAdapter the rather complex type parameters are necessary because of the MOXy bug
    * using the first (B) one (JAXB understood representation) as a source for casting the input on marshalling and the
    * second (L) one for the target. We need the third type parameter (A) to express the contents of our list.
    */
