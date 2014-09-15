@@ -23,10 +23,19 @@ object Atom {
 case class Atom(feed: Feed)
 
 @XmlRootElement()
-case class Feed(id:String, title:Text, updated: DateTime, authors:List[Person] = List(),
-                link:Option[Link] = None, category: List[Category] = List(), contributors: List[Person] = List(),
-                 generator: Option[Generator] = None, icon:Option[Uri] = None, logo:Option[Uri] = None,
-                 rights:Option[Text] = None, subtitle: Option[String] = None, entries: List[Entry]) {
+case class Feed(id:String,
+                title:Text,
+                updated: DateTime,
+                authors:List[Person] = List(),
+                link:Option[Link] = None,
+                category: List[Category] = List(),
+                contributors: List[Person] = List(),
+                generator: Option[Generator] = None,
+                icon:Option[Uri] = None,
+                logo:Option[Uri] = None,
+                rights:Option[Text] = None,
+                subtitle: Option[String] = None,
+                entries: List[Entry]) {
   val xmlns = "http://www.w3.org/2005/Atom"
 
 }
