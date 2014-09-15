@@ -17,14 +17,6 @@ trait JAXBConverters {
   // TODO: pool
   def marshaller:Marshaller = {
     val marshaller = context.createMarshaller()
-    // Completely remove the xml namespacing node (thus making our serialized object a 'fragment')
-    marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true)
-    // Now add back in the xml namespacing node but without the annoying 'standalone="yes"' attribute
-    // Details here: http://stackoverflow.com/questions/277996/jaxb-remove-standalone-yes-from-generated-xml
-    marshaller.setProperty(
-      //"com.sun.xml.internal.bind.xmlHeaders", // required if jaxb.properties has JDK RI set
-      "com.sun.xml.bind.xmlHeaders",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
     marshaller
   }
 
