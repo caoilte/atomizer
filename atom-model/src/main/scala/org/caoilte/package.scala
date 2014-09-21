@@ -63,7 +63,7 @@ package object jaxb {
    * using the first (B) one (JAXB understood representation) as a source for casting the input on marshalling and the
    * second (L) one for the target. We need the third type parameter (A) to express the contents of our list.
    */
-  abstract class AbstractListAdapter[B <: AbstractList[A], L <: List[A], A] extends XmlAdapter[B, List[A]] {
+  abstract class AbstractListAdapter[B <: AbstractList[A], A] extends XmlAdapter[B, List[A]] {
     import scala.collection.JavaConverters._
 
     def marshal(v: List[A]) = {

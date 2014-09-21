@@ -42,18 +42,14 @@ case class Feed(id:String,
 
 object Person {
   import java.util.{List => JList}
-  import scala.collection.JavaConverters._
 
-  class PersonsAdapter extends AbstractListAdapter[PersonItems,List[Person],Person] {
+  class PersonsAdapter extends AbstractListAdapter[PersonItems,Person] {
     def create(l: JList[Person]) = new PersonItems(l)
   }
 
   @XmlAccessorType(XmlAccessType.FIELD)
   case class PersonItems(@xmlElementRef(name = "person") elem: JList[Person]) extends AbstractList[Person] {
     def this() = this(null)
-  }
-  object PersonItems {
-    def apply(l: Iterable[Person]) = new PersonItems(l.toList.asJava)
   }
 }
 
@@ -124,18 +120,14 @@ case class Link(@xmlAttribute @xmlTypeAdapter(classOf[UriAdapter]) href:Uri,
 
 object Category {
   import java.util.{List => JList}
-  import scala.collection.JavaConverters._
 
-  class CategoriesAdapter extends AbstractListAdapter[CategoryItems,List[Category],Category] {
+  class CategoriesAdapter extends AbstractListAdapter[CategoryItems,Category] {
     def create(l: JList[Category]) = new CategoryItems(l)
   }
 
   @XmlAccessorType(XmlAccessType.FIELD)
   case class CategoryItems(@xmlElementRef(name = "category") elem: JList[Category]) extends AbstractList[Category] {
     def this() = this(null)
-  }
-  object CategoryItems {
-    def apply(l: Iterable[Category]) = new CategoryItems(l.toList.asJava)
   }
 }
 
@@ -169,7 +161,6 @@ case class Entry(@xmlElement id:String,
 }
 
 object Source {
-
   class SourceOptionAdapter extends OptionAdapter[Source](null)
 }
 
