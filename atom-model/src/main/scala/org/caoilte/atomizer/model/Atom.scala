@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.adapters._
 
 import org.caoilte.atomizer.model.Atom.{AtomDateTimeAdapter, AtomDateTimeOptionAdapter}
 import org.caoilte.atomizer.model.Email.EmailOptionAdapter
+import org.caoilte.atomizer.model.Generator.GeneratorOptionAdapter
 import org.caoilte.atomizer.model.Link.{LinkOptionAdapter, RelationshipAdapter, Relationship}
 import org.caoilte.atomizer.model.Source.SourceOptionAdapter
 import org.caoilte.atomizer.model.Text.TextOptionAdapter
@@ -12,6 +13,8 @@ import org.caoilte.jaxb._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import spray.http.{MediaType, Uri}
+
+import scala.collection.mutable
 
 object Atom {
 
@@ -22,34 +25,49 @@ object Atom {
 
 case class Atom(feed: Feed)
 
-@XmlRootElement()
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 case class Feed(id:String,
                 title:Text,
-                updated: DateTime,
-                authors:List[Person] = List(),
-                link:Option[Link] = None,
-                category: List[Category] = List(),
-                contributors: List[Person] = List(),
-                generator: Option[Generator] = None,
-                icon:Option[Uri] = None,
-                logo:Option[Uri] = None,
-                rights:Option[Text] = None,
-                subtitle: Option[String] = None,
-                entries: List[Entry]) {
+                @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
+                @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link] = None,
+                @xmlTypeAdapter(classOf[GeneratorOptionAdapter]) generator: Option[Generator] = None,
+                @xmlTypeAdapter(classOf[UriOptionAdapter]) icon:Option[Uri] = None,
+                @xmlTypeAdapter(classOf[UriOptionAdapter]) logo:Option[Uri] = None,
+                @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None,
+                @xmlTypeAdapter(classOf[StringOptionAdapter]) subtitle: Option[String] = None
+                 )(
+                entry:Array[Entry],
+                author:Array[Person] = Array[Person](),
+                category:Array[Category] = Array[Category](),
+                contributor:Array[Person] = Array[Person]()) {
   val xmlns = "http://www.w3.org/2005/Atom"
 
-}
+  private def this() =
+    this(
+      "", Text(""), new DateTime(), None, None, None, None, None, None
+    )(
+        Array[Entry](), Array[Person](), Array[Category](), Array[Person]()
+      )
 
-object Person {
-  import java.util.{List => JList}
 
-  class PersonsAdapter extends AbstractListAdapter[PersonItems,Person] {
-    def create(l: JList[Person]) = new PersonItems(l)
-  }
+  def productArity = 13
 
-  @XmlAccessorType(XmlAccessType.FIELD)
-  case class PersonItems(@xmlElementRef(name = "person") elem: JList[Person]) extends AbstractList[Person] {
-    def this() = this(null)
+  def productElement(n: Int): Any = n match {
+    case 0 => id
+    case 1 => title
+    case 2 => updated
+    case 3 => link
+    case 4 => generator
+    case 5 => icon
+    case 6 => logo
+    case 7 => rights
+    case 8 => subtitle
+    case 9 => mutable.WrappedArray.make(entry)
+    case 10 => mutable.WrappedArray.make(author)
+    case 11 => mutable.WrappedArray.make(category)
+    case 12 => mutable.WrappedArray.make(contributor)
+    case _ => throw new IndexOutOfBoundsException(n.toString)
   }
 }
 
@@ -59,7 +77,7 @@ case class Person(@xmlElement name:String,
                   @xmlElement @xmlTypeAdapter(classOf[UriOptionAdapter]) uri:Option[Uri] = None,
                   @xmlElement @xmlTypeAdapter(classOf[EmailOptionAdapter]) email:Option[Email] = None) {
 
-  private def this() = this("")
+  private def this() = this("", None, None)
 }
 
 object Email {
@@ -118,19 +136,6 @@ case class Link(@xmlAttribute @xmlTypeAdapter(classOf[UriAdapter]) href:Uri,
   private def this() = this(Uri(""))
 }
 
-object Category {
-  import java.util.{List => JList}
-
-  class CategoriesAdapter extends AbstractListAdapter[CategoryItems,Category] {
-    def create(l: JList[Category]) = new CategoryItems(l)
-  }
-
-  @XmlAccessorType(XmlAccessType.FIELD)
-  case class CategoryItems(@xmlElementRef(name = "category") elem: JList[Category]) extends AbstractList[Category] {
-    def this() = this(null)
-  }
-}
-
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 case class Category(@xmlAttribute term: String,
@@ -139,25 +144,59 @@ case class Category(@xmlAttribute term: String,
   private def this() = this("")
 }
 
-case class Generator(text:String, uri:Option[Uri] = None, version:Option[String] = None)
+object Generator {
+  class GeneratorOptionAdapter extends OptionAdapter[Generator](null, Generator(""))
+}
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-case class Entry(@xmlElement id:String,
-                 @xmlElement title:Text,
-                 @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
-                 @xmlTypeAdapter(classOf[Person.PersonsAdapter]) author:List[Person]= List(),
-                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) content:Option[Text] = None,
-                 @xmlElement @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link],
-                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) summary:Option[Text],
-                 @xmlTypeAdapter(classOf[Category.CategoriesAdapter]) category: List[Category] = List(),
-                 @xmlTypeAdapter(classOf[Person.PersonsAdapter]) contributor: List[Person] = List(),
-                 @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) published:Option[DateTime] = None,
-                 @xmlElement @xmlTypeAdapter(classOf[SourceOptionAdapter]) source:Option[Source] = None,
-                 @xmlElement @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) rights:Option[Text] = None) {
+case class Generator(@xmlValue text:String,
+                     @xmlAttribute @xmlTypeAdapter(classOf[UriOptionAdapter]) uri:Option[Uri] = None,
+                     @xmlAttribute @xmlTypeAdapter(classOf[StringOptionAdapter]) version:Option[String] = None) {
 
+  private def this() = this("", None, None)
+}
 
-  private def this() = this("", Text(""), new DateTime(), List(), None, None, None, List(), List(), None, None, None)
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Entry(id:String,
+                 title:Text,
+                 @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
+                 @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) content:Option[Text] = None,
+                 @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link],
+                 @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) summary:Option[Text],
+                 @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) published:Option[DateTime] = None,
+                 @xmlTypeAdapter(classOf[SourceOptionAdapter]) source:Option[Source] = None,
+                 @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) rights:Option[Text] = None
+  )(
+                 val author:Array[Person]= Array[Person](),
+                 val category: Array[Category] = Array[Category](),
+                 val contributor: Array[Person] = Array[Person]()) {
+
+  private def this() =
+    this(
+      "", Text(""), new DateTime(), None, None, None, None, None, None
+    )(
+        Array[Person](), Array[Category](), Array[Person]()
+      )
+
+  def productArity = 11
+
+  def productElement(n: Int): Any = n match {
+    case 0 => id
+    case 1 => title
+    case 2 => updated
+    case 3 => content
+    case 4 => link
+    case 5 => summary
+    case 6 => published
+    case 7 => source
+    case 8 => rights
+    case 9 => mutable.WrappedArray.make(author)
+    case 10 => mutable.WrappedArray.make(category)
+    case 11 => mutable.WrappedArray.make(contributor)
+    case _ => throw new IndexOutOfBoundsException(n.toString)
+  }
 }
 
 object Source {
@@ -166,10 +205,10 @@ object Source {
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-case class Source(@xmlElement @xmlTypeAdapter(classOf[StringOptionAdapter]) id:Option[String],
-                  @xmlElement @xmlTypeAdapter(classOf[TextOptionAdapter]) title:Option[Text],
-                  @xmlElement @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) updated: Option[DateTime],
-                  @xmlElement @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None) {
+case class Source(@xmlTypeAdapter(classOf[StringOptionAdapter]) id:Option[String],
+                  @xmlTypeAdapter(classOf[TextOptionAdapter]) title:Option[Text],
+                  @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) updated: Option[DateTime],
+                  @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None) {
 
   private def this() = this(None, None, None, None)
 }

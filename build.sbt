@@ -7,7 +7,9 @@ Publishing.settings
 
 Revolver.settings
 
+
 scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8", "-language", "postfixOps")
+
 
 lazy val root = (
     Project(
@@ -23,5 +25,9 @@ lazy val root = (
 lazy val atomModel = (
   module("atom-model", Seq(T.scalacheck, C.eclipseLink))
   settings(
+    testOptions in Test += Tests.Argument("-oD")
+  )
+  settings(
+    net.virtualvoid.sbt.graph.Plugin.graphSettings: _*
   )
 )

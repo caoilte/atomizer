@@ -12,7 +12,7 @@ import org.caoilte.atomizer.model._
 trait JAXBConverters {
 
   val context:JAXBContext = JAXBContext.newInstance(classOf[Text], classOf[Source], classOf[Link],
-    classOf[Category], classOf[Person], classOf[Entry])
+    classOf[Category], classOf[Person], classOf[Entry], classOf[Generator], classOf[Feed])
 
   // TODO: pool
   def marshaller:Marshaller = {

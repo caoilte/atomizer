@@ -94,17 +94,42 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
     id <- Gen.const("id")
     title <- texts
     updated <- dateTimes
-    authors <- Gen.listOf(persons)
     content <- optTexts
     link <- optLinks
     summary <- optTexts
-    categories <- Gen.listOf(categories)
-    contributors <- Gen.listOf(persons)
     published <- optDateTimes
     source <- optSources
     rights <- optTexts
-  } yield Entry(id, title, updated, authors, content, link, summary, categories, contributors, published, source, rights)
+    authors <- Gen.listOf(persons).map(_.toArray)
+    categories <- Gen.listOf(categories).map(_.toArray)
+    contributors <- Gen.listOf(persons).map(_.toArray)
+  } yield Entry(id, title, updated, content, link, summary, published, source, rights)(authors, categories, contributors)
 
+  val generators = for {
+    text <- Gen.const("/myblog.php")
+    uri <- optUris
+    version <- optStrings
+  } yield Generator(text, uri, version)
+
+  val noGenerator = Gen.const(None:Option[Generator])
+  val someGenerator = generators.map( Some.apply )
+  val optGenerators = Gen.oneOf( someGenerator, noGenerator)
+
+  val feeds = for {
+    id <- Gen.const("id")
+    title <- texts
+    updated <- dateTimes
+    link <- optLinks
+    generator <- optGenerators
+    icon <- optUris
+    logo <- optUris
+    rights <- optTexts
+    subtitle <- optStrings
+    entry <- Gen.listOf(entries).map(_.toArray)
+    author <- Gen.listOf(persons).map(_.toArray)
+    category <- Gen.listOf(categories).map(_.toArray)
+    contributor <- Gen.listOf(persons).map(_.toArray)
+  } yield Feed(id, title, updated, link, generator, icon, logo, rights, subtitle)(entry, author, category, contributor)
 
   val XML_FEED =
   """
@@ -133,15 +158,16 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   val XML_FEED_AS_TYPED_FEED = Atom(Feed(
     id = "urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6",
     title = Text("Example Feed"),
-    updated = Atom.dateFormat.parseDateTime("2003-12-13T18:30:02Z"),
-    entries = List(
+    updated = Atom.dateFormat.parseDateTime("2003-12-13T18:30:02Z")
+  )(
+      entry = Array(
       Entry (
         title = Text("Atom-Powered Robots Run Amok"),
         link = Some(Link(href = Uri("http://example.org/2003/12/13/atom03"))),
         id = "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a",
         updated = Atom.dateFormat.parseDateTime("2003-12-13T18:30:02Z"),
         summary = Some(Text("Some text."))
-      )
+      )()
     )
   ))
 
@@ -191,6 +217,13 @@ with GeneratorDrivenPropertyChecks with JAXBConverters {
   test("Generated Entries should serialize and re-serialize correctly") {
     forAll((entries, "entry")) { (entry: Entry) =>
       marshallThenUnmarshall(entry) should equal(entry)
+    }
+  }
+
+
+  test("Generated Feeds should serialize and re-serialize correctly") {
+    forAll((feeds, "feed")) { (feed: Feed) =>
+      marshallThenUnmarshall(feed) should equal(feed)
     }
   }
 

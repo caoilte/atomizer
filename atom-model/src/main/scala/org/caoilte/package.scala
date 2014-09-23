@@ -1,6 +1,5 @@
 package org.caoilte
 
-import java.util.{ArrayList, List => JList}
 import javax.xml.bind.annotation.adapters.{XmlAdapter, XmlJavaTypeAdapter}
 import javax.xml.bind.annotation.{XmlElementRef, XmlAttribute, XmlElement, XmlValue}
 
@@ -57,30 +56,4 @@ package object jaxb {
     override def marshal(v: java.lang.Long) = v.toString
   }
   class LongOptionAdapter extends CustomOptionAdapter[String,java.lang.Long](new LongAdapter,null)
-
-  /**
-   * NB As with the CustomOptionAdapter the rather complex type parameters are necessary because of the MOXy bug
-   * using the first (B) one (JAXB understood representation) as a source for casting the input on marshalling and the
-   * second (L) one for the target. We need the third type parameter (A) to express the contents of our list.
-   */
-  abstract class AbstractListAdapter[B <: AbstractList[A], A] extends XmlAdapter[B, List[A]] {
-    import scala.collection.JavaConverters._
-
-    def marshal(v: List[A]) = {
-      if (v == null) {
-        create(new ArrayList[A])
-      } else create(v.asJava)
-    }
-    def unmarshal(v: B) = {
-      if (v.elem == null)
-        List()
-      else
-        v.elem.asScala.toList
-    }
-    def create(l: JList[A]): B
-  }
-
-  trait AbstractList[A] {
-    def elem: JList[A]
-  }
 }
