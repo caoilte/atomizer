@@ -243,29 +243,3 @@ case class Text(@xmlValue content:String,
 }
 
 case class ContentLink(src:Uri, `type`:MediaType)
-
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-case class Ferson(name:String) {
-
-  private def this() = this("")
-}
-
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-case class Fntry(id:String, author:Array[Ferson] = Array[Ferson]()) {
-
-  private def this() = this("", Array[Ferson]())
-
-  def productArity = 2
-
-  def productElement(n: Int): Any = {
-    n match {
-      case 0 => id
-      case 1 => mutable.WrappedArray.make(author)
-      case _ => throw new IndexOutOfBoundsException(n.toString)
-    }
-  }
-
-  //override def equals(that: Any) = ScalaRunTime._equals(this, that)
-}

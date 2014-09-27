@@ -83,7 +83,7 @@ trait AtomGenerators {
   } yield Person(name, optUri, optEmail)
 
   val entries = for {
-    id <- Gen.oneOf("id", "id2")
+    id <- Gen.const("id")
     title <- texts
     updated <- dateTimes
     authors <- Gen.listOf(persons).map(_.toArray)

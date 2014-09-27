@@ -2,15 +2,16 @@ package org.caoilte.atomizer.model
 
 import java.io.{ByteArrayOutputStream, StringReader}
 import org.caoilte.jaxb.JAXBConverters
-import org.joda.time.DateTime
-import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, FunSuite}
 
-import spray.http.{MediaTypes, MediaType, Uri}
+import spray.http.Uri
 
 class FeedSerializationTests extends FunSuite with Matchers
 with GeneratorDrivenPropertyChecks with JAXBConverters with AtomGenerators {
+
+  implicit override val generatorDrivenConfig =
+    PropertyCheckConfig(maxSize = 3)
 
   val XML_FEED =
   """
