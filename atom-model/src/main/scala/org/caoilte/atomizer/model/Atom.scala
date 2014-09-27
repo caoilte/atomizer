@@ -15,6 +15,7 @@ import org.joda.time.format.DateTimeFormat
 import spray.http.{MediaType, Uri}
 
 import scala.collection.mutable
+import scala.runtime.ScalaRunTime
 
 object Atom {
 
@@ -30,25 +31,22 @@ case class Atom(feed: Feed)
 case class Feed(id:String,
                 title:Text,
                 @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
+                entry:Array[Entry],
+                author:Array[Person] = Array[Person](),
                 @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link] = None,
+                category:Array[Category] = Array[Category](),
+                contributor:Array[Person] = Array[Person](),
                 @xmlTypeAdapter(classOf[GeneratorOptionAdapter]) generator: Option[Generator] = None,
                 @xmlTypeAdapter(classOf[UriOptionAdapter]) icon:Option[Uri] = None,
                 @xmlTypeAdapter(classOf[UriOptionAdapter]) logo:Option[Uri] = None,
                 @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None,
-                @xmlTypeAdapter(classOf[StringOptionAdapter]) subtitle: Option[String] = None
-                 )(
-                entry:Array[Entry],
-                author:Array[Person] = Array[Person](),
-                category:Array[Category] = Array[Category](),
-                contributor:Array[Person] = Array[Person]()) {
+                @xmlTypeAdapter(classOf[StringOptionAdapter]) subtitle: Option[String] = None) {
   val xmlns = "http://www.w3.org/2005/Atom"
 
   private def this() =
     this(
-      "", Text(""), new DateTime(), None, None, None, None, None, None
-    )(
-        Array[Entry](), Array[Person](), Array[Category](), Array[Person]()
-      )
+      "", Text(""), new DateTime(), Array[Entry](), Array[Person](), None, Array[Category](), Array[Person](),
+      None, None, None, None, None)
 
 
   def productArity = 13
@@ -57,25 +55,27 @@ case class Feed(id:String,
     case 0 => id
     case 1 => title
     case 2 => updated
-    case 3 => link
-    case 4 => generator
-    case 5 => icon
-    case 6 => logo
-    case 7 => rights
-    case 8 => subtitle
-    case 9 => mutable.WrappedArray.make(entry)
-    case 10 => mutable.WrappedArray.make(author)
-    case 11 => mutable.WrappedArray.make(category)
-    case 12 => mutable.WrappedArray.make(contributor)
+    case 3 => mutable.WrappedArray.make(entry)
+    case 4 => mutable.WrappedArray.make(author)
+    case 5 => link
+    case 6 => mutable.WrappedArray.make(category)
+    case 7 => mutable.WrappedArray.make(contributor)
+    case 8 => generator
+    case 9 => icon
+    case 10 => logo
+    case 11 => rights
+    case 12 => subtitle
     case _ => throw new IndexOutOfBoundsException(n.toString)
   }
+
+  override def equals(that: Any) = ScalaRunTime._equals(this, that)
 }
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-case class Person(@xmlElement name:String,
-                  @xmlElement @xmlTypeAdapter(classOf[UriOptionAdapter]) uri:Option[Uri] = None,
-                  @xmlElement @xmlTypeAdapter(classOf[EmailOptionAdapter]) email:Option[Email] = None) {
+case class Person(name:String,
+                  @xmlTypeAdapter(classOf[UriOptionAdapter]) uri:Option[Uri] = None,
+                  @xmlTypeAdapter(classOf[EmailOptionAdapter]) email:Option[Email] = None) {
 
   private def this() = this("", None, None)
 }
@@ -162,41 +162,39 @@ case class Generator(@xmlValue text:String,
 case class Entry(id:String,
                  title:Text,
                  @xmlTypeAdapter(classOf[AtomDateTimeAdapter]) updated: DateTime,
+                 author:Array[Person]= Array[Person](),
                  @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) content:Option[Text] = None,
                  @xmlTypeAdapter(classOf[LinkOptionAdapter]) link:Option[Link],
                  @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) summary:Option[Text],
+                 category: Array[Category] = Array[Category](),
+                 contributor: Array[Person] = Array[Person](),
                  @xmlTypeAdapter(classOf[AtomDateTimeOptionAdapter]) published:Option[DateTime] = None,
                  @xmlTypeAdapter(classOf[SourceOptionAdapter]) source:Option[Source] = None,
-                 @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) rights:Option[Text] = None
-  )(
-                 val author:Array[Person]= Array[Person](),
-                 val category: Array[Category] = Array[Category](),
-                 val contributor: Array[Person] = Array[Person]()) {
+                 @xmlTypeAdapter(classOf[Text.TextOptionAdapter]) rights:Option[Text] = None) {
 
   private def this() =
-    this(
-      "", Text(""), new DateTime(), None, None, None, None, None, None
-    )(
-        Array[Person](), Array[Category](), Array[Person]()
-      )
+    this("", Text(""), new DateTime(), Array[Person](), None, None, None, Array[Category](), Array[Person](),
+      None, None, None)
 
-  def productArity = 11
+  def productArity = 12
 
   def productElement(n: Int): Any = n match {
     case 0 => id
     case 1 => title
     case 2 => updated
-    case 3 => content
-    case 4 => link
-    case 5 => summary
-    case 6 => published
-    case 7 => source
-    case 8 => rights
-    case 9 => mutable.WrappedArray.make(author)
-    case 10 => mutable.WrappedArray.make(category)
-    case 11 => mutable.WrappedArray.make(contributor)
+    case 3 => mutable.WrappedArray.make(author)
+    case 4 => content
+    case 5 => link
+    case 6 => summary
+    case 7 => mutable.WrappedArray.make(category)
+    case 8 => mutable.WrappedArray.make(contributor)
+    case 9 => published
+    case 10 => source
+    case 11 => rights
     case _ => throw new IndexOutOfBoundsException(n.toString)
   }
+
+  override def equals(that: Any) = ScalaRunTime._equals(this, that)
 }
 
 object Source {
@@ -246,3 +244,28 @@ case class Text(@xmlValue content:String,
 
 case class ContentLink(src:Uri, `type`:MediaType)
 
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Ferson(name:String) {
+
+  private def this() = this("")
+}
+
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+case class Fntry(id:String, author:Array[Ferson] = Array[Ferson]()) {
+
+  private def this() = this("", Array[Ferson]())
+
+  def productArity = 2
+
+  def productElement(n: Int): Any = {
+    n match {
+      case 0 => id
+      case 1 => mutable.WrappedArray.make(author)
+      case _ => throw new IndexOutOfBoundsException(n.toString)
+    }
+  }
+
+  //override def equals(that: Any) = ScalaRunTime._equals(this, that)
+}
