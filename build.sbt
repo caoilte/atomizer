@@ -23,7 +23,7 @@ lazy val root = (
 )
 
 lazy val atomModel = (
-  module("atom-model", Seq(T.scalacheck, C.eclipseLink))
+  module("atom-model", Seq(T.scalacheck, C.eclipseLink, T.scalaXml))
   settings(
     testOptions in Test += Tests.Argument("-oD")
   )

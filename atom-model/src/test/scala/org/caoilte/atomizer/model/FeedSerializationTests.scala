@@ -7,6 +7,8 @@ import org.scalatest.{Matchers, FunSuite}
 
 import spray.http.Uri
 
+import scala.xml.XML
+
 class FeedSerializationTests extends FunSuite with Matchers
 with GeneratorDrivenPropertyChecks with JAXBConverters with AtomGenerators {
 
@@ -14,43 +16,59 @@ with GeneratorDrivenPropertyChecks with JAXBConverters with AtomGenerators {
     PropertyCheckConfig(maxSize = 3)
 
   val XML_FEED =
-  """
-    |<?xml version="1.0" encoding="utf-8"?>
-    |<feed xmlns="http://www.w3.org/2005/Atom">
+  """<?xml version="1.0" encoding="utf-8"?>
+    |<feed>
     |
+    |  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
     |  <title>Example Feed</title>
-    |  <link href="http://example.org/"/>
     |  <updated>2003-12-13T18:30:02Z</updated>
+    |
+    |  <entry>
+    |    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
+    |    <title>Atom-Powered Robots Run Amok</title>
+    |    <updated>2003-12-13T18:30:02Z</updated>
+    |    <link href="http://example.org/2003/12/13/atom03"/>
+    |    <summary>Some text.</summary>
+    |  </entry>
+    |
     |  <author>
     |    <name>John Doe</name>
     |  </author>
-    |  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
-    |
-    |  <entry>
-    |    <title>Atom-Powered Robots Run Amok</title>
-    |    <link href="http://example.org/2003/12/13/atom03"/>
-    |    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
-    |    <updated>2003-12-13T18:30:02Z</updated>
-    |    <summary>Some text.</summary>
-    |  </entry>
+    |  <link href="http://example.org/"/>
     |
     |</feed>
   """.stripMargin
 
-  val XML_FEED_AS_TYPED_FEED = Atom(Feed(
-    id = "urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6",
+  val XML_FEED_AS_TYPED_FEED = Feed(
     title = Text("Example Feed"),
-    updated = Atom.dateFormat.parseDateTime("2003-12-13T18:30:02Z"),
-      entry = Array(
+    link = Some(Link(Uri("http://example.org/"))),
+    updated = Atom.outputFormatterWithSecondsAndOptionalTZ.parseDateTime("2003-12-13T18:30:02Z"),
+    author = Array(Person("John Doe")),
+    id = "urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6",
+    entry = Array(
       Entry (
         title = Text("Atom-Powered Robots Run Amok"),
         link = Some(Link(href = Uri("http://example.org/2003/12/13/atom03"))),
         id = "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a",
-        updated = Atom.dateFormat.parseDateTime("2003-12-13T18:30:02Z"),
+        updated = Atom.outputFormatterWithSecondsAndOptionalTZ.parseDateTime("2003-12-13T18:30:02Z"),
         summary = Some(Text("Some text."))
       )
     )
-  ))
+  )
+
+  test("Example XML Feed should de-serialize to example Typed Feed") {
+    val reader = new StringReader(XML_FEED)
+    val unmarshalledObj:AnyRef = unmarshaller.unmarshal(reader)
+    unmarshalledObj should equal(XML_FEED_AS_TYPED_FEED)
+  }
+
+  test("Example Typed Feed should serialize to expected XML Feed") {
+    import org.scalatest.StreamlinedXmlEquality._
+
+    val baos = new ByteArrayOutputStream()
+    marshaller.marshal(XML_FEED_AS_TYPED_FEED, baos)
+    XML.loadString(baos.toString) should equal(XML.loadString(XML_FEED))
+  }
 
   test("Generated Texts should serialize and re-serialize correctly") {
     forAll((texts, "text")) { (text: Text) =>

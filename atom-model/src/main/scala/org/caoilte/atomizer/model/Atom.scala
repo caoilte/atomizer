@@ -11,7 +11,7 @@ import org.caoilte.atomizer.model.Source.SourceOptionAdapter
 import org.caoilte.atomizer.model.Text.TextOptionAdapter
 import org.caoilte.jaxb._
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{ISODateTimeFormat, DateTimeFormatterBuilder, DateTimeFormatter}
 import spray.http.{MediaType, Uri}
 
 import scala.collection.mutable
@@ -19,12 +19,17 @@ import scala.runtime.ScalaRunTime
 
 object Atom {
 
-  val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
-  class AtomDateTimeAdapter extends DateTimeAdapter(dateFormat)
-  class AtomDateTimeOptionAdapter extends DateTimeOptionAdapter(dateFormat)
-}
+  /**
+   * E.g. 2014-03-30T03:45:00+01:00 or 2014-03-29T03:45:00Z  i.e. yyyy-MM-dd'T'HHmmssZZ OR yyyy-MM-dd'T'HHmmss'Z'
+   */
+  val outputFormatterWithSecondsAndOptionalTZ: DateTimeFormatter = new DateTimeFormatterBuilder()
+    .append(ISODateTimeFormat.dateHourMinuteSecond)
+    .appendTimeZoneOffset("Z", true, 2, 4)
+    .toFormatter
 
-case class Atom(feed: Feed)
+  class AtomDateTimeAdapter extends DateTimeAdapter(outputFormatterWithSecondsAndOptionalTZ)
+  class AtomDateTimeOptionAdapter extends DateTimeOptionAdapter(outputFormatterWithSecondsAndOptionalTZ)
+}
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -41,7 +46,6 @@ case class Feed(id:String,
                 @xmlTypeAdapter(classOf[UriOptionAdapter]) logo:Option[Uri] = None,
                 @xmlTypeAdapter(classOf[TextOptionAdapter]) rights:Option[Text] = None,
                 @xmlTypeAdapter(classOf[StringOptionAdapter]) subtitle: Option[String] = None) {
-  val xmlns = "http://www.w3.org/2005/Atom"
 
   private def this() =
     this(

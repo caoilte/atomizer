@@ -24,6 +24,7 @@ object Dependencies {
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"
     val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % V.akka % "test"
     val scalacheck = "org.scalacheck" %% "scalacheck" % "1.11.5" % "test"
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.2" % "test"
   }
 
   val globalDependencies = Seq(
